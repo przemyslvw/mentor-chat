@@ -23,7 +23,7 @@
     }
   ],
   "hosting": {
-    "public": "dist/mentor-chat",
+    "public": "dist/mentor-chat/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
