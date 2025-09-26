@@ -1,0 +1,32 @@
+# Build output
+dist
+build
+
+# Dependencies
+node_modules
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+
+# Firebase
+.firebase/
+.runtimeconfig.json
+
+# Misc
+*.log
+npm-debug.log*
