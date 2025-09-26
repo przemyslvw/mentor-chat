@@ -1,4 +1,51 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f7fa;
+}
+
+/* Error Snackbar */
+.error-snackbar {
+  background-color: #f44336 !important; /* Red background for errors */
+  color: white !important;
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action:not(:disabled) {
+    color: white;
+  }
+}
+
+/* Success Snackbar */
+.success-snackbar {
+  background-color: #4caf50 !important; /* Green background for success */
+  color: white !important;
+  
+  .mat-mdc-button.mat-mdc-snack-bar-action:not(:disabled) {
+    color: white;
+  }
+}
+
+/* Make sure the content doesn't hide behind the header */
+.main-content {
+  margin-top: 64px; /* Adjust based on your header height */
+  padding: 1rem;
+  min-height: calc(100vh - 64px); /* Full height minus header */
+}
+
+/* Responsive layout adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-top: 56px; /* Smaller header on mobile */
+    min-height: calc(100vh - 56px);
+    padding: 0.5rem;
+  }
+}

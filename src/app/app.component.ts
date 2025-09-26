@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './core/components/header/header.component';
 import { SidebarComponent } from './core/components/sidebar/sidebar.component';
+import { LoadingSpinnerComponent } from './shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, LoadingSpinnerComponent],
   template: `
     <div class="app-container">
       <app-header class="header"></app-header>
@@ -16,6 +17,7 @@ import { SidebarComponent } from './core/components/sidebar/sidebar.component';
           <router-outlet></router-outlet>
         </main>
       </div>
+      <app-loading-spinner></app-loading-spinner>
     </div>
   `,
   styles: [`
