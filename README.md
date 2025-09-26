@@ -4,6 +4,9 @@
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
+## Demo App
+https://zapytaj-6fbcc.web.app/
+
 ## Spis Treści Zadań - Chatbot Zapytaj AI
 
 Wdrożenie od zera do produkcji
