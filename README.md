@@ -5,6 +5,7 @@
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
 ## Demo App
+
 https://zapytaj-6fbcc.web.app/
 
 ## Spis Treści Zadań - Chatbot Zapytaj AI
@@ -48,9 +49,37 @@ Wdrożenie od zera do produkcji
 📊 FAZA II: BAZA DANYCH I EMBEDDINGI (Tydzień 2-3)
 2.1 Projektowanie Struktury Firestore
 
-    2.1.1 Definicja kolekcji: users, conversations, messages, quotes, embeddings
+    2.1.1 Definicja kolekcji:
+        - users (dokumenty):
+          - email: string
+          - name: string
+          - context?: string
 
-    2.1.2 Utworzenie interfejsów TypeScript dla wszystkich modeli
+        - characters (dokumenty):
+          - name: string
+          - description: string
+          - quotes: string[]
+          - avatarUrl?: string
+
+        - chats (kolekcja):
+          - userId: string (odwołanie do users)
+          - characterId: string (odwołanie do characters)
+          - messages: Array<{
+              content: string
+              senderId: string
+              isFromUser: boolean
+              quote?: string
+              timestamp: Timestamp
+            }>
+          - createdAt: Timestamp
+          - updatedAt: Timestamp
+          - isActive: boolean
+
+    2.1.2 Zaimplementowane interfejsy TypeScript:
+        - User - model użytkownika
+        - Character - model postaci mentora
+        - Chat - model konwersacji
+        - ChatMessage - model wiadomości w konwersacji
 
     2.1.3 Konfiguracja Firestore Security Rules
 
