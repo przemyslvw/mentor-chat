@@ -2,8 +2,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    // Match any document in the 'users' collection
+    match /users/{userId} {
+      // Users can read and write their own user document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow admins to read all user documents
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Match any document in the 'conversations' collection
+    match /conversations/{conversationId} {
+      // Users can read conversations they're a participant in
+      allow read: if request.auth != null && 
+        (request.auth.uid in resource.data.participants);
+      
+      // Users can create conversations where they are a participant
+      allow create: if request.auth != null && 
+        request.auth.uid in request.resource.data.participants;
+      
+      // Only allow updating lastMessage and updatedAt fields
+      allow update: if request.auth != null &&
+        request.auth.uid in resource.data.participants &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastMessage', 'updatedAt']);
+    }
+
+    // Match any document in the 'messages' subcollection
+    match /conversations/{conversationId}/messages/{messageId} {
+      // Users can read messages from conversations they're in
+      allow read: if request.auth != null && 
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+      
+      // Users can only create messages in conversations they're in
+      allow create: if request.auth != null && 
+        request.auth.uid in request.resource.data.senderId &&
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+    }
+
+    // Match any document in the 'mentorProfiles' collection
+    match /mentorProfiles/{mentorId} {
+      // Anyone can read mentor profiles
+      allow read: if true;
+      
+      // Only the mentor can update their own profile
+      allow write: if request.auth != null && request.auth.uid == mentorId;
+      
+      // Admins can also update mentor profiles
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
   }
 }
