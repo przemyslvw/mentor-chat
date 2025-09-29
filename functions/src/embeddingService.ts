@@ -1,9 +1,9 @@
-import * as admin from 'firebase-admin';
-import * as logger from 'firebase-functions/logger';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as admin from "firebase-admin";
+import * as logger from "firebase-functions/logger";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Google Gemini
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
 interface BatchEmbeddingRequest {
   texts: string[];
@@ -26,7 +26,7 @@ export const batchGenerateEmbeddings = async (request: BatchEmbeddingRequest) =>
   const { texts, collection, fieldToEmbed, fieldToStore } = request;
 
   if (!texts || !collection || !fieldToEmbed || !fieldToStore) {
-    throw new Error('Missing required parameters');
+    throw new Error("Missing required parameters");
   }
 
   const db = admin.firestore();
@@ -38,7 +38,7 @@ export const batchGenerateEmbeddings = async (request: BatchEmbeddingRequest) =>
   for (const text of texts) {
     try {
       // Generate embedding using Gemini
-      const model = genAI.getGenerativeModel({ model: 'embedding-001' });
+      const model = genAI.getGenerativeModel({ model: "embedding-001" });
       const result = await model.embedContent(text);
       const embedding = result.embedding.values;
 
@@ -59,7 +59,7 @@ export const batchGenerateEmbeddings = async (request: BatchEmbeddingRequest) =>
         batchCount = 0;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       logger.error(`Error processing text:`, errorMessage);
       results.push({ text, success: false, error: errorMessage });
     }
@@ -80,11 +80,11 @@ export const findSimilarDocuments = async (request: SimilaritySearchRequest) => 
   const { query, collection, fieldToSearch, limit = 5 } = request;
 
   if (!query || !collection || !fieldToSearch) {
-    throw new Error('Missing required parameters');
+    throw new Error("Missing required parameters");
   }
 
   // Generate embedding for the query
-  const model = genAI.getGenerativeModel({ model: 'embedding-001' });
+  const model = genAI.getGenerativeModel({ model: "embedding-001" });
   const result = await model.embedContent(query);
   const queryEmbedding = result.embedding.values;
 
@@ -133,21 +133,18 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 }
 
 // Cloud Functions wrappers
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall } from "firebase-functions/v2/https";
 
-export const batchGenerateEmbeddingsCF = onCall(
-  { enforceAppCheck: true, maxInstances: 1 },
-  async request => {
-    if (!request.auth) {
-      throw new Error('Authentication required');
-    }
-    return batchGenerateEmbeddings(request.data);
-  },
-);
-
-export const findSimilarDocumentsCF = onCall({ enforceAppCheck: true }, async request => {
+export const batchGenerateEmbeddingsCF = onCall({ enforceAppCheck: true, maxInstances: 1 }, async (request) => {
   if (!request.auth) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
+  }
+  return batchGenerateEmbeddings(request.data);
+});
+
+export const findSimilarDocumentsCF = onCall({ enforceAppCheck: true }, async (request) => {
+  if (!request.auth) {
+    throw new Error("Authentication required");
   }
   return findSimilarDocuments(request.data);
 });
