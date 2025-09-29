@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>Upload Quotes</h2>
+<mat-dialog-content>
+  <div class="upload-container">
+    <div *ngIf="!isUploading; else uploadingTemplate">
+      <div class="file-input-container" (click)="fileInput.click()">
+        <input
+          #fileInput
+          type="file"
+          (change)="onFileSelected($event)"
+          accept=".csv,.json"
+          style="display: none"
+        />
+        <mat-icon>cloud_upload</mat-icon>
+        <p>Drag & drop a file here or click to browse</p>
+        <p class="file-name" *ngIf="selectedFile">
+          Selected: {{ selectedFile.name }} ({{ selectedFile.size | fileSize }})
+        </p>
+        <p class="file-hint">Supported formats: CSV, JSON (Max 10MB)</p>
+      </div>
+
+      <div *ngIf="uploadResult" class="upload-result">
+        <div
+          class="result-summary"
+          [ngClass]="{
+            success: uploadResult.success,
+            error: !uploadResult.success,
+          }"
+        >
+          <mat-icon>{{ uploadResult.success ? 'check_circle' : 'error' }}</mat-icon>
+          <span>{{ uploadResult.message }}</span>
+        </div>
+
+        <div *ngIf="uploadResult.success" class="stats">
+          <div class="stat">
+            <span class="stat-value">{{ uploadResult.data?.length || 0 }}</span>
+            <span class="stat-label">Quotes Processed</span>
+          </div>
+          <div *ngIf="hasErrors" class="stat error">
+            <span class="stat-value">{{ uploadResult.errors?.length || 0 }}</span>
+            <span class="stat-label">Errors</span>
+          </div>
+        </div>
+
+        <div *ngIf="hasErrors" class="error-details">
+          <h4>Some issues were found:</h4>
+          <ul>
+            <li *ngFor="let error of uploadResult.errors">
+              Line {{ error.line }}: {{ error.error }}
+              <pre class="error-data">{{ error.data | json }}</pre>
+            </li>
+          </ul>
+          <button mat-stroked-button color="warn" (click)="downloadErrors()">
+            <mat-icon>download</mat-icon>
+            Download Error Log
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #uploadingTemplate>
+      <div class="uploading-container">
+        <mat-spinner diameter="48"></mat-spinner>
+        <h3>Uploading quotes...</h3>
+        <p>Please wait while we process your file</p>
+        <mat-progress-bar mode="determinate" [value]="uploadProgress" class="upload-progress">
+        </mat-progress-bar>
+        <span class="progress-text">{{ uploadProgress }}% Complete</span>
+      </div>
+    </ng-template>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button [disabled]="isUploading" (click)="onCancel()">
+    {{ uploadResult ? 'Close' : 'Cancel' }}
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="!selectedFile || isUploading"
+    (click)="onUpload()"
+  >
+    <mat-icon>upload</mat-icon>
+    Upload
+  </button>
+</mat-dialog-actions>

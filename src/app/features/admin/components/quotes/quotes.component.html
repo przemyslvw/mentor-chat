@@ -2,15 +2,15 @@
   <div class="header">
     <h2>Zarządzanie cytatami</h2>
     <div class="actions">
-      <mat-form-field appearance="outline" class="mentor-select">
-        <mat-label>Wybierz mentora</mat-label>
-        <mat-select [(ngModel)]="selectedMentorId" (selectionChange)="onMentorChange()">
-          <mat-option *ngFor="let mentor of mentors" [value]="mentor.id">
-            {{ mentor.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
+      <button
+        mat-stroked-button
+        (click)="openUploadDialog()"
+        class="upload-btn"
+        [disabled]="!selectedMentorId"
+      >
+        <mat-icon>upload</mat-icon>
+        Importuj
+      </button>
       <button
         mat-raised-button
         color="primary"

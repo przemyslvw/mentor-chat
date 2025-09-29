@@ -9,8 +9,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { QuoteFormComponent } from './quote-form/quote-form.component';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatChipsModule } from '@angular/material/chips';
+import { QuoteFormComponent } from './quote-form/quote-form.component';
+import { QuoteUploadComponent } from './quote-upload/quote-upload.component';
 import { TruncatePipe } from '../../../../shared/pipes/truncate/truncate.pipe';
 
 @Component({
@@ -26,8 +28,9 @@ import { TruncatePipe } from '../../../../shared/pipes/truncate/truncate.pipe';
     MatSnackBarModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatChipsModule,
     TruncatePipe,
-  ] as const,
+  ],
   templateUrl: './quotes.component.html',
   styleUrls: ['./quotes.component.scss'],
 })
@@ -84,16 +87,33 @@ export class QuotesComponent implements OnInit {
 
     const dialogRef = this.dialog.open(QuoteFormComponent, {
       width: '600px',
-      data: {
-        isEdit: false,
-        mentorId: this.selectedMentorId,
-      },
+      data: { mentorId: this.selectedMentorId },
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadQuotes();
         this.showMessage('Cytat został dodany pomyślnie');
+      }
+    });
+  }
+
+  openUploadDialog(): void {
+    if (!this.selectedMentorId) {
+      this.snackBar.open('Proszę wybrać mentora przed zaimportowaniem cytatów', 'OK', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(QuoteUploadComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+    });
+
+    dialogRef.afterClosed().subscribe(refresh => {
+      if (refresh) {
+        this.loadQuotes();
       }
     });
   }

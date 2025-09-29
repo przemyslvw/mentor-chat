@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { BehaviorSubject, Observable, filter } from 'rxjs';
 
@@ -27,7 +27,7 @@ export class SidebarService {
   constructor() {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(event => {
+      .subscribe((event: NavigationEnd) => {
         this.currentRoute = event.urlAfterRedirects || event.url;
         this.updateMenuItems();
       });
