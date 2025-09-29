@@ -1,0 +1,147 @@
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+  .mentor-name {
+    font-size: 0.9em;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: normal;
+    margin-left: 8px;
+  }
+}
+
+.mentor-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+
+  .mentor-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .mentor-details {
+    h3 {
+      margin: 0 0 4px 0;
+      font-size: 1.1em;
+      font-weight: 500;
+    }
+
+    .mentor-title {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 0.9em;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 20px;
+
+  textarea {
+    line-height: 1.5;
+    min-height: 120px;
+    resize: vertical;
+    font-size: 16px;
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 8px;
+  justify-content: flex-end;
+  background-color: #fafafa;
+
+  button {
+    margin-left: 8px;
+    min-width: 100px;
+
+    &[color='primary'] {
+      font-weight: 500;
+    }
+  }
+}
+
+mat-dialog-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+mat-checkbox {
+  display: block;
+  margin: 8px 0 16px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+// Responsive styles
+@media (max-width: 600px) {
+  h2 {
+    padding: 12px 16px;
+    font-size: 1.2em;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+
+    .mentor-name {
+      margin-left: 0;
+      font-size: 0.8em;
+    }
+  }
+
+  .mentor-info {
+    flex-direction: column;
+    text-align: center;
+    padding: 12px;
+
+    .mentor-details {
+      text-align: center;
+
+      h3 {
+        margin-bottom: 2px;
+      }
+    }
+  }
+
+  mat-dialog-content {
+    padding: 16px;
+  }
+
+  mat-dialog-actions {
+    padding: 12px 16px;
+
+    button {
+      min-width: 80px;
+      padding: 0 12px;
+    }
+  }
+
+  .full-width textarea {
+    min-height: 100px;
+  }
+}

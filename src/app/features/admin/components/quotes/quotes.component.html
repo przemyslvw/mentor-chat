@@ -1,0 +1,84 @@
+<div class="quotes-container">
+  <div class="header">
+    <h2>Zarządzanie cytatami</h2>
+    <div class="actions">
+      <mat-form-field appearance="outline" class="mentor-select">
+        <mat-label>Wybierz mentora</mat-label>
+        <mat-select [(ngModel)]="selectedMentorId" (selectionChange)="onMentorChange()">
+          <mat-option *ngFor="let mentor of mentors" [value]="mentor.id">
+            {{ mentor.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="openAddDialog()"
+        [disabled]="!selectedMentorId"
+      >
+        <mat-icon>add</mat-icon> Dodaj nowy cytat
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="selectedMentorId; else noMentorSelected" class="table-container">
+    <table mat-table [dataSource]="quotes" class="mat-elevation-z1">
+      <!-- Content Column -->
+      <ng-container matColumnDef="content">
+        <th mat-header-cell *matHeaderCellDef>Treść</th>
+        <td mat-cell *matCellDef="let element">{{ element.content | truncate: 100 }}</td>
+      </ng-container>
+
+      <!-- Category Column -->
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef>Kategoria</th>
+        <td mat-cell *matCellDef="let element">{{ element.category || 'Brak kategorii' }}</td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="isActive">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let element">
+          <mat-chip [ngClass]="element.isActive ? 'active' : 'inactive'">
+            {{ element.isActive ? 'Aktywny' : 'Nieaktywny' }}
+          </mat-chip>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Akcje</th>
+        <td mat-cell *matCellDef="let element" class="actions-cell">
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="openEditDialog(element)"
+            matTooltip="Edytuj"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deleteQuote(element.id!)" matTooltip="Usuń">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <div *ngIf="quotes.length === 0" class="no-data">
+      <p>
+        Brak dostępnych cytatów dla wybranego mentora. Kliknij przycisk powyżej, aby dodać nowy
+        cytat.
+      </p>
+    </div>
+  </div>
+
+  <ng-template #noMentorSelected>
+    <div class="no-mentor">
+      <p>Proszę wybrać mentora, aby wyświetlić lub dodać cytaty.</p>
+    </div>
+  </ng-template>
+</div>

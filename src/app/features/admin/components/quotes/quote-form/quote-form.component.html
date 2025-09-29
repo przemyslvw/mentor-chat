@@ -1,0 +1,65 @@
+<h2 mat-dialog-title>
+  {{ isEdit ? 'Edytuj cytat' : 'Dodaj nowy cytat' }}
+  <span *ngIf="mentor" class="mentor-name">dla {{ mentor.name }}</span>
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="quoteForm" (ngSubmit)="onSubmit()">
+    <div *ngIf="mentor" class="mentor-info">
+      <div class="mentor-photo" *ngIf="mentor.photoUrl">
+        <img [src]="mentor.photoUrl" [alt]="mentor.name" />
+      </div>
+      <div class="mentor-details">
+        <h3>{{ mentor.name }}</h3>
+        <p *ngIf="mentor.title" class="mentor-title">{{ mentor.title }}</p>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Treść cytatu</mat-label>
+      <textarea
+        matInput
+        formControlName="content"
+        rows="4"
+        required
+        placeholder="Wpisz treść cytatu..."
+        cdkTextareaAutosize
+        cdkAutosizeMinRows="3"
+        cdkAutosizeMaxRows="6"
+      >
+      </textarea>
+      <mat-error *ngIf="quoteForm.get('content')?.hasError('required')">
+        Treść jest wymagana
+      </mat-error>
+      <mat-error *ngIf="quoteForm.get('content')?.hasError('minlength')">
+        Treść musi mieć co najmniej 10 znaków
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Kategoria</mat-label>
+      <mat-select formControlName="category" required>
+        <mat-option *ngFor="let category of categories" [value]="category">
+          {{ category }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="quoteForm.get('category')?.hasError('required')">
+        Kategoria jest wymagana
+      </mat-error>
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isActive"> Aktywny (widoczny na stronie) </mat-checkbox>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Anuluj</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="!quoteForm.valid || !mentor"
+    (click)="onSubmit()"
+  >
+    {{ isEdit ? 'Zapisz zmiany' : 'Dodaj cytat' }}
+  </button>
+</mat-dialog-actions>
