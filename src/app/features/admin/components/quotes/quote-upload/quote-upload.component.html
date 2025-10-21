@@ -67,10 +67,142 @@
         <span class="progress-text">{{ uploadProgress }}% Complete</span>
       </div>
     </ng-template>
+
+    <!-- Embedding Preview Section -->
+    <mat-expansion-panel class="mt-4">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>preview</mat-icon>
+          <span class="ml-2">Embedding Preview</span>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="embedding-preview">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Enter text to preview embedding</mat-label>
+          <input
+            matInput
+            [(ngModel)]="embeddingText"
+            (keyup.enter)="generateEmbeddingPreview(embeddingText)"
+            placeholder="Type a quote and press Enter"
+          />
+          <button
+            matSuffix
+            mat-icon-button
+            (click)="generateEmbeddingPreview(embeddingText)"
+            [disabled]="!embeddingText?.trim()"
+          >
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <div *ngIf="embeddingPreview" class="mt-4">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Embedding Preview</mat-card-title>
+              <mat-card-subtitle>{{ embeddingPreview.text }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="embeddingPreview.loading" class="loading-container">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span class="ml-2">Generating embedding...</span>
+              </div>
+
+              <div
+                *ngIf="!embeddingPreview.loading && embeddingPreview.error"
+                class="error-message"
+              >
+                <mat-icon color="warn">error</mat-icon>
+                <span class="ml-2">{{ embeddingPreview.error }}</span>
+              </div>
+
+              <div
+                *ngIf="!embeddingPreview.loading && !embeddingPreview.error"
+                class="embedding-data"
+              >
+                <p class="text-sm text-gray-600 mb-2">
+                  Vector dimensions: {{ embeddingPreview.embedding.length }}
+                </p>
+                <div class="embedding-vector">
+                  <span class="vector-preview" matTooltip="First 10 dimensions">
+                    [{{ embeddingPreview.embedding.slice(0, 10).join(', ')
+                    }}{{ embeddingPreview.embedding.length > 10 ? ', ...' : '' }}]
+                  </span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-expansion-panel>
+
+    <!-- Similarity Testing Section -->
+    <mat-expansion-panel class="mt-4">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>compare_arrows</mat-icon>
+          <span class="ml-2">Test Similarity</span>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="similarity-test">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Test quote similarity</mat-label>
+          <input
+            matInput
+            [(ngModel)]="testQuery"
+            (keyup.enter)="testSimilarity()"
+            placeholder="Type a quote and press Enter to find similar quotes"
+          />
+          <button
+            matSuffix
+            mat-icon-button
+            (click)="testSimilarity()"
+            [disabled]="!testQuery?.trim() || isTesting"
+          >
+            <mat-icon *ngIf="!isTesting">search</mat-icon>
+            <mat-spinner *ngIf="isTesting" diameter="20"></mat-spinner>
+          </button>
+        </mat-form-field>
+
+        <div *ngIf="similarityResults.length > 0" class="mt-4">
+          <h3 class="text-lg font-medium mb-2">Similar Quotes</h3>
+          <mat-list>
+            <mat-list-item *ngFor="let result of similarityResults" class="mb-2">
+              <mat-card class="w-full">
+                <mat-card-content>
+                  <div class="flex justify-between items-center">
+                    <div class="flex-1">
+                      <p class="text-sm text-gray-600 mb-1">
+                        Score: {{ result.score | number: '1.2-2' }}
+                      </p>
+                      <p class="whitespace-pre-line">{{ result.text }}</p>
+                    </div>
+                    <button mat-icon-button [matMenuTriggerFor]="menu">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu">
+                      <button mat-menu-item>
+                        <mat-icon>visibility</mat-icon>
+                        <span>View Details</span>
+                      </button>
+                      <button mat-menu-item>
+                        <mat-icon>content_copy</mat-icon>
+                        <span>Copy Text</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </mat-list-item>
+          </mat-list>
+        </div>
+      </div>
+    </mat-expansion-panel>
   </div>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions align="end" class="p-4">
   <button mat-button [disabled]="isUploading" (click)="onCancel()">
     {{ uploadResult ? 'Close' : 'Cancel' }}
   </button>
@@ -79,8 +211,9 @@
     color="primary"
     [disabled]="!selectedFile || isUploading"
     (click)="onUpload()"
+    class="ml-2"
   >
     <mat-icon>upload</mat-icon>
-    Upload
+    <span class="ml-1">Upload</span>
   </button>
 </mat-dialog-actions>

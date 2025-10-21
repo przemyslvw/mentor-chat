@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,7 +13,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule } from '@angular/forms';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 
@@ -44,6 +43,18 @@ interface FileUploadResult<T = QuoteData> {
   }[];
 }
 
+interface EmbeddingResponse {
+  embedding: number[];
+}
+
+interface SimilarityResponse {
+  results: Array<{
+    text: string;
+    score: number;
+    metadata: any;
+  }>;
+}
+
 @Component({
   selector: 'app-quote-upload',
   standalone: true,
@@ -62,7 +73,6 @@ interface FileUploadResult<T = QuoteData> {
     MatCardModule,
     MatListModule,
     MatTooltipModule,
-    MatMenuModule,
     FormsModule,
     FileSizePipe,
   ],
@@ -71,114 +81,129 @@ interface FileUploadResult<T = QuoteData> {
 })
 export class QuoteUploadComponent {
   @ViewChild('fileInput') fileInput!: ElementRef;
-
+  
   selectedFile: File | null = null;
   isUploading = false;
   isTesting = false;
   uploadProgress = 0;
   uploadResult: FileUploadResult | null = null;
-
+  
   // Embedding preview
-  embeddingText = '';
   embeddingPreview: {
     text: string;
     embedding: number[];
     loading: boolean;
     error?: string;
   } | null = null;
-
+  
+  // Similarity test
   testQuery = '';
-  similarityResults: {
+  similarityResults: Array<{
     text: string;
     score: number;
-    metadata: Record<string, unknown>;
-  }[] = [];
+    metadata: any;
+  }> = [];
 
-  private readonly snackBar = inject(MatSnackBar);
-  private readonly dialogRef = inject(MatDialogRef<QuoteUploadComponent>);
-  private readonly fileUploadService = inject(FileUploadService);
-  private readonly quotesService = inject(QuotesService);
-  private readonly functions = inject(Functions);
+  constructor(
+    private snackBar: MatSnackBar,
+    private dialogRef: MatDialogRef<QuoteUploadComponent>,
+    private fileUploadService: FileUploadService,
+    private quotesService: QuotesService,
+    private functions: Functions
+  ) {}
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
-      this.uploadResult = null;
+  onFileSelected(event: any): void {
+    this.selectedFile = event.target.files[0];
+  }
+
+  async onUpload(): Promise<void> {
+    if (!this.selectedFile) return;
+
+    this.isUploading = true;
+    this.uploadProgress = 0;
+    this.uploadResult = null;
+
+    try {
+      const result = await this.fileUploadService.uploadFile<QuoteData>(
+        this.selectedFile,
+        'quotes',
+        (progress) => {
+          this.uploadProgress = progress;
+        }
+      );
+
+      this.uploadResult = result;
+      this.snackBar.open('Upload completed successfully', 'Close', {
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Upload failed:', error);
+      this.snackBar.open('Upload failed. Please try again.', 'Close', {
+        duration: 5000,
+        panelClass: ['error-snackbar'],
+      });
+    } finally {
+      this.isUploading = false;
     }
   }
 
-  onCancel(): void {
-    this.dialogRef.close();
-  }
-  get hasErrors(): boolean {
-    return !!(this.uploadResult?.errors && this.uploadResult.errors.length > 0);
-  }
-
-  get hasWarnings(): boolean {
-    return !!(
-      this.uploadResult?.data &&
-      this.uploadResult.data.length > 0 &&
-      this.uploadResult.errors &&
-      this.uploadResult.errors.length > 0
-    );
-  }
-
-  async generateEmbeddingPreview(text: string): Promise<void> {
+  async generateEmbeddingPreview(text: string) {
     if (!text.trim()) return;
-
+    
     this.embeddingPreview = {
       text,
       embedding: [],
-      loading: true,
+      loading: true
     };
-
+    
     try {
-      const generateEmbedding = httpsCallable<{ text: string }, { embedding: number[] }>(
+      const generateEmbedding = httpsCallable<{ text: string }, EmbeddingResponse>(
         this.functions,
-        'generateEmbedding',
+        'generateEmbedding'
       );
       const result = await generateEmbedding({ text });
-
-      this.embeddingPreview = {
-        text,
-        embedding: result.data?.embedding || [],
-        loading: false,
-      };
+      
+      if (result.data) {
+        this.embeddingPreview = {
+          ...this.embeddingPreview,
+          embedding: result.data.embedding,
+          loading: false
+        };
+      }
     } catch (error) {
       console.error('Error generating embedding:', error);
       this.embeddingPreview = {
-        text,
-        embedding: [],
-        loading: false,
+        ...this.embeddingPreview!,
         error: 'Failed to generate embedding',
+        loading: false
       };
     }
   }
-
-  async testSimilarity(): Promise<void> {
-    if (!this.testQuery?.trim()) return;
-
+  
+  async testSimilarity() {
+    if (!this.testQuery.trim()) return;
+    
     this.isTesting = true;
     this.similarityResults = [];
-
+    
     try {
-      const findSimilar = httpsCallable<
-        { query: string; limit: number },
-        { results: { text: string; score: number; metadata: Record<string, unknown> }[] }
-      >(this.functions, 'findSimilarQuotes');
-
+      const findSimilar = httpsCallable<{ query: string; limit: number }, SimilarityResponse>(
+        this.functions,
+        'findSimilarQuotes'
+      );
       const result = await findSimilar({
         query: this.testQuery,
-        limit: 5,
+        limit: 5
       });
-
-      this.similarityResults = result.data?.results || [];
+      
+      if (result.data) {
+        this.similarityResults = result.data.results || [];
+      }
     } catch (error) {
       console.error('Error testing similarity:', error);
       this.snackBar.open('Failed to test similarity', 'Close', {
         duration: 3000,
-        panelClass: ['error-snackbar'],
+        panelClass: ['error-snackbar']
       });
     } finally {
       this.isTesting = false;
@@ -191,67 +216,25 @@ export class QuoteUploadComponent {
     const errorData = this.uploadResult.errors;
     const blob = new Blob([JSON.stringify(errorData, null, 2)], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
-
+    
     const a = document.createElement('a');
     a.href = url;
-    a.download = `quote-errors-${new Date().toISOString()}.json`;
+    a.download = 'quote_upload_errors.json';
     document.body.appendChild(a);
     a.click();
-
-    // Cleanup
-    window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    a.download = `quote-upload-errors-${new Date().toISOString()}.json`;
-    document.body.appendChild(a);
-    a.click();
-
-    // Cleanup
     window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
   }
 
-  async onUpload(): Promise<void> {
-    if (!this.selectedFile) return;
+  onCancel(): void {
+    this.dialogRef.close();
+  }
 
-    this.isUploading = true;
-    this.uploadProgress = 0;
-    this.uploadResult = null;
+  get hasErrors(): boolean {
+    return !!(this.uploadResult?.errors?.length);
+  }
 
-    try {
-      // TODO: Implement the actual file upload logic in QuotesService
-      // const result = await this.quotesService.uploadQuotes(
-      //   this.selectedFile,
-      //   (progress: number) => {
-      //     this.uploadProgress = progress;
-      //   }
-      // );
-
-      // Mock response for now
-      const mockResult: FileUploadResult = {
-        success: true,
-        message: 'Upload successful',
-        data: [],
-        errors: [],
-      };
-
-      this.uploadResult = mockResult;
-
-      if (mockResult.success) {
-        this.snackBar.open('Quotes uploaded successfully!', 'Close', {
-          duration: 3000,
-        });
-      } else if (mockResult.errors?.length) {
-        this.snackBar.open(
-          `Upload completed with ${mockResult.errors.length} errors. Check the results below.`,
-          'Dismiss',
-          { duration: 5000 },
-        );
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      this.snackBar.open('Error uploading file. Please try again.', 'Dismiss', { duration: 5000 });
-    } finally {
-      this.isUploading = false;
-    }
+  get hasWarnings(): boolean {
+    return (this.uploadResult?.data?.length || 0) < (this.uploadResult?.errors?.length || 0);
   }
 }
