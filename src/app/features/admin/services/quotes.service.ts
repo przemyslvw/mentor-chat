@@ -13,12 +13,30 @@ import {
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
+export interface Tag {
+  id: string;
+  name: string;
+  color?: string;
+  description?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+}
+
 export interface Quote {
   id?: string;
   mentorId: string;
   content: string;
-  category: string;
+  category: string; // Category ID
+  tags: string[]; // Array of tag IDs
   isActive: boolean;
+  source?: string;
+  author?: string;
+  context?: string;
   createdAt: Date;
   updatedAt: Date;
 }
