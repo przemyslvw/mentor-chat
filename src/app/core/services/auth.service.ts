@@ -70,6 +70,26 @@ export class AuthService {
     return from(createUserWithEmailAndPassword(this.auth, email, password)).pipe(
       switchMap((userCredential: UserCredential) => {
         const user = this.mapFirebaseUserToUser(userCredential.user);
+
+        // Dodaj użytkownika do kolekcji users w Firestore
+        import('firebase/firestore').then(({ doc, setDoc, getFirestore }) => {
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+
+          setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || '',
+            photoURL: user.photoURL || '',
+            emailVerified: user.emailVerified,
+            isAdmin: false, // Domyślnie nowi użytkownicy nie są administratorami
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
+          }).catch(error => {
+            console.error('Błąd podczas zapisywania danych użytkownika:', error);
+          });
+        });
+
         this.showSuccess('Rejestracja zakończona pomyślnie!');
         this.router.navigate(['/auth/login']);
         return of(user);
@@ -84,11 +104,24 @@ export class AuthService {
   // Logowanie użytkownika
   login(email: string, password: string): Observable<User | null> {
     return from(signInWithEmailAndPassword(this.auth, email, password)).pipe(
-      map((userCredential: UserCredential) => {
+      switchMap((userCredential: UserCredential) => {
         const user = this.mapFirebaseUserToUser(userCredential.user);
+
+        // Aktualizuj datę ostatniego logowania w Firestore
+        import('firebase/firestore').then(({ doc, updateDoc, getFirestore }) => {
+          const db = getFirestore();
+          const userRef = doc(db, 'users', user.uid);
+
+          updateDoc(userRef, {
+            lastLogin: new Date().toISOString(),
+          }).catch(error => {
+            console.error('Błąd podczas aktualizacji danych logowania:', error);
+          });
+        });
+
         this.showSuccess('Zalogowano pomyślnie!');
         this.router.navigate(['/chat']);
-        return user;
+        return of(user);
       }),
       catchError((error: Error & { code?: string }) => {
         this.handleError(error);
