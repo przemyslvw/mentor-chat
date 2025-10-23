@@ -90,7 +90,7 @@
             matSuffix
             mat-icon-button
             (click)="generateEmbeddingPreview(embeddingText)"
-            [disabled]="!embeddingText?.trim()"
+            [disabled]="!embeddingText || !embeddingText.trim()"
           >
             <mat-icon>search</mat-icon>
           </button>
@@ -158,7 +158,7 @@
             matSuffix
             mat-icon-button
             (click)="testSimilarity()"
-            [disabled]="!testQuery?.trim() || isTesting"
+            [disabled]="!testQuery || !testQuery.trim() || isTesting"
           >
             <mat-icon *ngIf="!isTesting">search</mat-icon>
             <mat-spinner *ngIf="isTesting" diameter="20"></mat-spinner>

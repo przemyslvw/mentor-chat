@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Auth,
   User as FirebaseUser,
   UserCredential,
   createUserWithEmailAndPassword,
@@ -9,6 +8,9 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
 } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { environment } from '../../../environments/environment';
 import { BehaviorSubject, Observable, from, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -25,7 +27,7 @@ export class AuthService {
 
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
-  private auth = inject(Auth);
+  private auth = getAuth(initializeApp(environment.firebase));
 
   constructor() {
     // Sprawdzanie stanu autentykacji przy starcie aplikacji
@@ -49,7 +51,7 @@ export class AuthService {
     return {
       uid,
       email: email || '',
-      displayName: displayName || undefined,
+      displayName: displayName || null,
       photoURL: photoURL || undefined,
       emailVerified,
       metadata,

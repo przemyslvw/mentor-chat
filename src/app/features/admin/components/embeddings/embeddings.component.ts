@@ -95,7 +95,7 @@ interface EmbeddingDocument {
             <p class="text-gray-500">Vector Dimensions</p>
             <p class="text-2xl font-bold">
               <ng-container *ngIf="documents$ | async as documents; else loadingDims">
-                {{ documents[0]?.embedding?.length || 'N/A' }}
+                {{ documents[0] && documents[0].embedding ? documents[0].embedding.length : 'N/A' }}
               </ng-container>
               <ng-template #loadingDims>Loading...</ng-template>
             </p>
