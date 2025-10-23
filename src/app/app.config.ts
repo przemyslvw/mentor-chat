@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -9,15 +9,20 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { routes } from './app.routes';
-import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
-import { getAuth, provideAuth } from '@angular/fire/auth';
-import { getFirestore, provideFirestore } from '@angular/fire/firestore';
-import { getFunctions, provideFunctions } from '@angular/fire/functions';
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { errorInterceptor } from './core/interceptors/error/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading/loading.interceptor';
 import { LoadingService } from './core/services/loading.service';
-import { getStorage, provideStorage } from '@angular/fire/storage';
+import { environment } from '../environments/environment';
+
+// Inicjalizacja Firebase
+const firebaseApp = initializeApp(environment.firebase);
+const auth = getAuth(firebaseApp);
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,46 +30,23 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([
         (req, next) => {
-          // First apply loading interceptor
+          // Najpierw interceptor ładowania
           return loadingInterceptor(req, req =>
-            // Then apply error interceptor
+            // Następnie interceptor błędów
             errorInterceptor(req, next),
           );
         },
       ]),
     ),
     LoadingService,
-    MatSnackBarModule,
+    importProvidersFrom(MatSnackBarModule),
     provideAnimations(),
-    provideFirebaseApp(() =>
-      initializeApp({
-        projectId: 'mentor-chat-9a1c2',
-        appId: '1:315578043612:web:5c9b9c5b5e3e3c5e8b8b9a',
-        storageBucket: 'mentor-chat-9a1c2.appspot.com',
-        apiKey: 'AIzaSyB4kXfzXQZ1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1Q1',
-        authDomain: 'mentor-chat-9a1c2.firebaseapp.com',
-        messagingSenderId: '315578043612',
-      }),
-    ),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
-    provideFunctions(() => getFunctions()),
     provideAnimationsAsync(),
-    provideFirebaseApp(() =>
-      initializeApp({
-        projectId: 'zapytaj-6fbcc',
-        appId: '1:165410793587:web:90820ac245356f09e56206',
-        storageBucket: 'zapytaj-6fbcc.firebasestorage.app',
-        apiKey: 'AIzaSyBN2AuxwXevQrpj4xTTgM5WELD872OgGTA',
-        authDomain: 'zapytaj-6fbcc.firebaseapp.com',
-        messagingSenderId: '165410793587',
-        measurementId: 'G-KQGKPRB6PJ',
-        projectNumber: '165410793587',
-        version: '2',
-      }),
-    ),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage()),
+    // Dostarczanie usług Firebase
+    { provide: 'FIREBASE_APP', useValue: firebaseApp },
+    { provide: 'FIREBASE_AUTH', useValue: auth },
+    { provide: 'FIREBASE_FIRESTORE', useFactory: () => getFirestore(firebaseApp) },
+    { provide: 'FIREBASE_FUNCTIONS', useFactory: () => getFunctions(firebaseApp) },
+    { provide: 'FIREBASE_STORAGE', useFactory: () => getStorage(firebaseApp) },
   ],
 };

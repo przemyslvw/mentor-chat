@@ -32,6 +32,7 @@ import { QuotesComponent } from './components/quotes/quotes.component';
     MatSelectModule,
     MatCheckboxModule,
     MatSnackBarModule,
+    // Import komponentów standalone
     QuotesComponent,
     QuoteFormComponent,
     EmbeddingsComponent,
