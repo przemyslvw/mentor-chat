@@ -1,21 +1,22 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { map, take } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 
 export const noAuthGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  return authService.isLoggedIn$.pipe(
-    take(1),
-    map(isLoggedIn => {
-      if (isLoggedIn) {
+  return new Promise<boolean | import('@angular/router').UrlTree>(resolve => {
+    const subscription = authService.currentUser$.pipe(take(1)).subscribe(user => {
+      if (user) {
         // Jeśli użytkownik jest zalogowany, przekieruj do strony głównej
-        return router.parseUrl('/chat');
+        resolve(router.parseUrl('/chat'));
+      } else {
+        // Jeśli użytkownik nie jest zalogowany, zezwól na dostęp
+        resolve(true);
       }
-      // Jeśli użytkownik nie jest zalogowany, zezwól na dostęp do strony logowania/rejestracji
-      return true;
-    }),
-  );
+      subscription.unsubscribe();
+    });
+  });
 };

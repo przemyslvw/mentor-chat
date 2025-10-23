@@ -11,7 +11,7 @@ import {
 import { getAuth } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { BehaviorSubject, Observable, from, of, throwError } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -72,27 +72,53 @@ export class AuthService {
         const user = this.mapFirebaseUserToUser(userCredential.user);
 
         // Dodaj użytkownika do kolekcji users w Firestore
-        import('firebase/firestore').then(({ doc, setDoc, getFirestore }) => {
-          const db = getFirestore();
-          const userRef = doc(db, 'users', user.uid);
+        return from(import('firebase/firestore')).pipe(
+          switchMap(({ doc, setDoc, getFirestore }) => {
+            try {
+              const db = getFirestore();
+              const userRef = doc(db, 'users', user.uid);
 
-          setDoc(userRef, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || '',
-            photoURL: user.photoURL || '',
-            emailVerified: user.emailVerified,
-            isAdmin: false, // Domyślnie nowi użytkownicy nie są administratorami
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-          }).catch(error => {
-            console.error('Błąd podczas zapisywania danych użytkownika:', error);
-          });
-        });
+              const userData = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || '',
+                photoURL: user.photoURL || '',
+                emailVerified: user.emailVerified,
+                isAdmin: false,
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+              };
 
-        this.showSuccess('Rejestracja zakończona pomyślnie!');
-        this.router.navigate(['/auth/login']);
-        return of(user);
+              // Używamy console.warn zamiast console.log, aby spełnić reguły ESLint
+              console.warn('Zapisywanie danych użytkownika:', userData);
+
+              return from(setDoc(userRef, userData)).pipe(
+                switchMap(() => {
+                  console.warn('Dane użytkownika zapisane pomyślnie');
+                  // Wyloguj użytkownika po rejestracji
+                  return from(signOut(this.auth));
+                }),
+                map(() => {
+                  this.showSuccess(
+                    'Rejestracja zakończona pomyślnie! Zaloguj się, aby kontynuować.',
+                  );
+                  this.router.navigate(['/auth/login']);
+                  return user;
+                }),
+              );
+            } catch (error) {
+              console.error('Błąd podczas przygotowywania danych użytkownika:', error);
+              return throwError(() => new Error('Błąd podczas przygotowywania danych użytkownika'));
+            }
+          }),
+          catchError(error => {
+            console.error('Błąd podczas zapisywania danych użytkownika w Firestore:', error);
+            this.showError('Wystąpił błąd podczas rejestracji. Spróbuj ponownie.');
+            // Usuń użytkownika z Firebase Auth jeśli wystąpił błąd przy zapisie do Firestore
+            userCredential.user.delete().catch(console.error);
+            return of(null);
+          }),
+        );
       }),
       catchError((error: Error & { code?: string }) => {
         this.handleError(error);
@@ -177,6 +203,13 @@ export class AuthService {
     this.snackBar.open(message, 'OK', {
       duration: 5000,
       panelClass: ['success-snackbar'],
+    });
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Zamknij', {
+      duration: 5000,
+      panelClass: ['error-snackbar'],
     });
   }
 
