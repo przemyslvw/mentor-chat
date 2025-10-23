@@ -8,15 +8,29 @@ export const noAuthGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return new Promise<boolean | import('@angular/router').UrlTree>(resolve => {
-    const subscription = authService.currentUser$.pipe(take(1)).subscribe(user => {
-      if (user) {
-        // Jeśli użytkownik jest zalogowany, przekieruj do strony głównej
-        resolve(router.parseUrl('/chat'));
-      } else {
-        // Jeśli użytkownik nie jest zalogowany, zezwól na dostęp
+    // Create a subscription with proper type
+    const subscription = authService.currentUser$.pipe(take(1)).subscribe({
+      next: user => {
+        if (user) {
+          // Jeśli użytkownik jest zalogowany, przekieruj do strony głównej
+          resolve(router.parseUrl('/chat'));
+        } else {
+          // Jeśli użytkownik nie jest zalogowany, zezwól na dostęp
+          resolve(true);
+        }
+        // Unsubscribe after we're done
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      },
+      error: error => {
+        console.error('Error in noAuthGuard:', error);
+        // W przypadku błędu, zezwól na dostęp do ścieżki (bezpieczniejsze)
         resolve(true);
-      }
-      subscription.unsubscribe();
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      },
     });
   });
 };

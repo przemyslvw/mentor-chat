@@ -67,16 +67,19 @@ export class AuthService {
 
   // Rejestracja nowego użytkownika
   register(email: string, password: string): Observable<User | null> {
+    console.warn('Rozpoczęcie rejestracji użytkownika:', email);
+
     return from(createUserWithEmailAndPassword(this.auth, email, password)).pipe(
       switchMap((userCredential: UserCredential) => {
         const user = this.mapFirebaseUserToUser(userCredential.user);
+        console.warn('Użytkownik utworzony w Firebase Auth:', user.uid);
 
         // Dodaj użytkownika do kolekcji users w Firestore
         return from(import('firebase/firestore')).pipe(
-          switchMap(({ doc, setDoc, getFirestore }) => {
+          switchMap(firestore => {
             try {
-              const db = getFirestore();
-              const userRef = doc(db, 'users', user.uid);
+              const db = firestore.getFirestore();
+              const userRef = firestore.doc(db, 'users', user.uid);
 
               const userData = {
                 uid: user.uid,
@@ -89,13 +92,11 @@ export class AuthService {
                 lastLogin: new Date().toISOString(),
               };
 
-              // Używamy console.warn zamiast console.log, aby spełnić reguły ESLint
-              console.warn('Zapisywanie danych użytkownika:', userData);
+              console.warn('Próba zapisania danych użytkownika:', userData);
 
-              return from(setDoc(userRef, userData)).pipe(
+              return from(firestore.setDoc(userRef, userData)).pipe(
                 switchMap(() => {
                   console.warn('Dane użytkownika zapisane pomyślnie');
-                  // Wyloguj użytkownika po rejestracji
                   return from(signOut(this.auth));
                 }),
                 map(() => {
@@ -115,7 +116,10 @@ export class AuthService {
             console.error('Błąd podczas zapisywania danych użytkownika w Firestore:', error);
             this.showError('Wystąpił błąd podczas rejestracji. Spróbuj ponownie.');
             // Usuń użytkownika z Firebase Auth jeśli wystąpił błąd przy zapisie do Firestore
-            userCredential.user.delete().catch(console.error);
+            userCredential.user
+              .delete()
+              .then(() => console.warn('Usunięto użytkownika z powodu błędu Firestore'))
+              .catch(err => console.error('Błąd podczas usuwania użytkownika:', err));
             return of(null);
           }),
         );
